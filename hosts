@@ -1,0 +1,20 @@
+[headquarters]
+hq ansible_ssh_host=192.168.1.230
+sede1 ansible_ssh_host=192.168.1.232
+sede2 ansible_ssh_host=192.168.1.234
+sede3 ansible_ssh_host=192.168.1.236
+sede4 ansible_ssh_host=192.168.1.238
+
+[headquartersbck]
+hq-bck ansible_ssh_host=192.168.1.231
+sede1-bck ansible_ssh_host=192.168.1.233
+sede2-bck ansible_ssh_host=192.168.1.235
+sede3-bck ansible_ssh_host=192.168.1.237
+sede4-bck ansible_ssh_host=192.168.1.239
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_user=vyos
+ansible_connection=network_cli
+ansible_network_os=vyos
+ansible_ssh_pass="1"
