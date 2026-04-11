@@ -1,4 +1,4 @@
-# SD-WAN
+# SD-WAN OPEN SOURCE
 
 ## Requirements
 
@@ -20,8 +20,8 @@ In the VyOS machines must be configured ssh service and IP with gateway if you a
 configure # This command enters in configuration mode
 set service ssh port 22
 # THE NEXT commands only if you are in LAN network
-set interface ethernet eth0 address <IP/CIDR>
-set interface ethernet eth1 address <IP/CIDR>
+set interfaces ethernet eth0 address <IP/CIDR>
+set interfaces ethernet eth1 address <IP/CIDR>
 set protocols static route 0.0.0.0/0 next-hop <IP_Gateway> 
 commit # Apply
 save # In disk
@@ -75,6 +75,18 @@ host_key_checking = no # Avoid fingerprinting when connecting via ssh
 retry_files_enabled = False # Does not create files with failed hosts in the playbook
 ```
 
+### VARIABLE
+In all locations it is necessary to agree on some variables, but for the first playbook only the lan_ip variable is necessary where the LAN network must be defined.
+
+```bash
+mkdir host_vars # DIR FOR ANSIBLE VARIABLE
+touch sede{1..4}.yml hq.yml # SAME NAME AS IN THE INVENTORY FILE
+```
+
+```yml
+lan_ip: "192.168.0.1/23"
+```
+
 ### EXEC FIRST PLAYBOOK
 
 Once this configuration is in place, you can run the first Ansible playbook. This playbook applies the basic system configuration, including the hostname, SSH key-based access for VyOS, timezone settings, and other initial parameters.
@@ -93,6 +105,8 @@ save: true # Save in disk
 
 ### WIREGUARD
 
+We have to have two tunnels, one will be the main one and the other will act as a failover.
+
 It needs create the wireguard keys in the controller machine because the keys cannot be handled correctly if they are created next to the playbook execution, at least I have not been able to.
 This script can help you.
 ```bash
@@ -103,12 +117,21 @@ names=("hq" "sede1" "sede2" "sede3" "sede4")
 for i in ${names[@]}; do
 	wg genkey | tee "${i}".key | wg pubkey > "${i}.pub"
 done
+
+for i in ${names[@]}; do
+	wg genkey | tee "${i}".2.key | wg pubkey > "${i}.2.pub"
+done
 ```
 
 It is also necessary to define the variables that will contain the wireguard IPs for the headquarters.
 ```bash
 mkdir host_vars # DIR FOR ANSIBLE VARIABLE
 touch sede{1..4}.yml # SAME NAME AS IN THE INVENTORY FILE
+```
+
+```yml
+wg_ip: "10.10.10.1/24" # wg0
+wg_ip_bck: "10.10.20.1/24" # wg1
 ```
 
 The playbook is responsible for assigning only the private keys, since only with this wireguard key is it able to obtain the public key, this is done to all locations.
@@ -172,4 +195,5 @@ In the "hq" headquarters a wireguard IP and the respective public keys and IPs a
 Exec.
 ```bash
 ansible-playbook -i hosts WireguardConfigurtion.yml
+ansible-playbook -i hosts WireguardConfigurtion2.yml
 ```

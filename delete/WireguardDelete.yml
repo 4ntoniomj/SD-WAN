@@ -1,0 +1,11 @@
+- name: Limpiar configuración BGP por completo
+  hosts: headquarters
+  gather_facts: no
+  connection: network_cli
+  tasks:
+    - name: Eliminar nodo de protocolos BGP
+      vyos_config:
+        lines:
+          - delete interfaces wireguard wg0
+          - delete interfaces wireguard wg1
+        save: yes

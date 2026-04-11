@@ -8,6 +8,7 @@
     - name: Configuration
       vyos_config:
         lines:
+          - set interfaces ethernet eth2 address {{ lan_ip }}
           - set system host-name {{ inventory_hostname }}
           - set system name-server 1.1.1.1
           - set interfaces loopback lo address 127.0.0.1/32

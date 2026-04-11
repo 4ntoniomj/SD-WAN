@@ -23,13 +23,21 @@
       vyos_config:
         lines:
           - set interfaces wireguard wg1 address 10.10.20.1/24
+
           - set interfaces wireguard wg1 peer sede1 allowed-ips 10.10.20.2/32
+          - set interfaces wireguard wg1 peer sede1 allowed-ips {{ sede1_net }}
           - set interfaces wireguard wg1 peer sede1 public-key "{{ lookup('file', 'sede1.2.pub' ) }}"
+
           - set interfaces wireguard wg1 peer sede2 allowed-ips 10.10.20.3/32
+          - set interfaces wireguard wg1 peer sede2 allowed-ips {{ sede2_net }}
           - set interfaces wireguard wg1 peer sede2 public-key "{{ lookup('file', 'sede2.2.pub' ) }}"
+
           - set interfaces wireguard wg1 peer sede3 allowed-ips 10.10.20.4/32
+          - set interfaces wireguard wg1 peer sede3 allowed-ips {{ sede3_net }}
           - set interfaces wireguard wg1 peer sede3 public-key "{{ lookup('file', 'sede3.2.pub' ) }}"
+
           - set interfaces wireguard wg1 peer sede4 allowed-ips 10.10.20.5/32
+          - set interfaces wireguard wg1 peer sede4 allowed-ips {{ sede4_net }}
           - set interfaces wireguard wg1 peer sede4 public-key "{{ lookup('file', 'sede4.2.pub' ) }}"
         save: true
 
@@ -42,7 +50,7 @@
     - name: Global configuration wireguard
       vyos_config:
         lines:
-          - set interfaces wireguard wg1 address {{ wg_ip2 }}
+          - set interfaces wireguard wg1 address {{ wg_ip_bck }}
           - set interfaces wireguard wg1 peer hq public-key '{{ lookup('file', 'hq.2.pub') }}'
           - set interfaces wireguard wg1 peer hq address 192.168.1.231
           - set interfaces wireguard wg1 peer hq port 51821

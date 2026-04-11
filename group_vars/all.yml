@@ -1,0 +1,24 @@
+hq_ip_vpn: '10.10.10.1'
+hq_ipbck_vpn: '10.10.20.1'
+hq_as: '65000'
+hq_net: '172.16.0.0/23'
+
+sede1_ip_vpn: '10.10.10.2'
+sede1_ipbck_vpn: '10.10.20.2'
+sede1_as: '65001'
+sede1_net: '172.16.2.0/23'
+
+sede2_ip_vpn: '10.10.10.3'
+sede2_ipbck_vpn: '10.10.20.3'
+sede2_as: '65002'
+sede2_net: '172.16.4.0/23'
+
+sede3_ip_vpn: '10.10.10.4'
+sede3_ipbck_vpn: '10.10.20.4'
+sede3_as: '65003'
+sede3_net: '172.16.6.0/23'
+
+sede4_ip_vpn: '10.10.10.5'
+sede4_ipbck_vpn: '10.10.20.5'
+sede4_as: '65004'
+sede4_net: '172.16.8.0/23'

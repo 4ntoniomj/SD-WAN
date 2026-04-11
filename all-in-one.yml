@@ -1,0 +1,177 @@
+---
+- name: Wireguard autoconfiguration
+  hosts: headquarters
+  gather_facts: 'no'
+  connection: network_cli
+
+  tasks:
+    - name: Global configuration wireguard
+      vyos_config:
+        lines:
+          - set interfaces wireguard wg0 private-key "{{ lookup('file', inventory_hostname ~ '.key') }}"
+          - set interfaces wireguard wg0 description 'SDWAN'
+          - set interfaces wireguard wg0 port 51820
+        save: true
+
+- name: Wireguard HQ
+  hosts: hq
+  gather_facts: 'no'
+  connection: network_cli
+
+  tasks:
+    - name: Global configuration wireguard
+      vyos_config:
+        lines:
+          - set interfaces wireguard wg0 address 10.10.10.1/24
+
+          - set interfaces wireguard wg0 peer sede1 allowed-ips 10.10.10.2/32
+          - set interfaces wireguard wg0 peer sede1 allowed-ips {{ sede1_net }}
+          - set interfaces wireguard wg0 peer sede1 public-key "{{ lookup('file', 'sede1.pub' ) }}"
+
+          - set interfaces wireguard wg0 peer sede2 allowed-ips 10.10.10.3/32
+          - set interfaces wireguard wg0 peer sede2 public-key "{{ lookup('file', 'sede2.pub' ) }}"
+          - set interfaces wireguard wg0 peer sede2 allowed-ips {{ sede2_net }}
+
+          - set interfaces wireguard wg0 peer sede3 allowed-ips 10.10.10.4/32
+          - set interfaces wireguard wg0 peer sede3 public-key "{{ lookup('file', 'sede3.pub' ) }}"
+          - set interfaces wireguard wg0 peer sede3 allowed-ips {{ sede3_net }}
+
+          - set interfaces wireguard wg0 peer sede4 allowed-ips 10.10.10.5/32
+          - set interfaces wireguard wg0 peer sede4 public-key "{{ lookup('file', 'sede4.pub' ) }}"
+          - set interfaces wireguard wg0 peer sede4 allowed-ips {{ sede4_net }}
+        save: true
+
+- name: Wireguard headquarters1
+  hosts: sede1, sede2, sede3, sede4
+  gather_facts: 'no'
+  connection: network_cli
+
+  tasks:
+    - name: Global configuration wireguard
+      vyos_config:
+        lines:
+          - set interfaces wireguard wg0 address {{ wg_ip }}
+          - set interfaces wireguard wg0 peer hq public-key '{{ lookup('file', 'hq.pub') }}'
+          - set interfaces wireguard wg0 peer hq address 192.168.1.230
+          - set interfaces wireguard wg0 peer hq port 51820
+          - set interfaces wireguard wg0 peer hq persistent-keepalive 25
+          - set interfaces wireguard wg0 peer hq allowed-ips 0.0.0.0/0
+        save: true
+
+- name: Wireguard autoconfiguration
+  hosts: headquarters
+  gather_facts: 'no'
+  connection: network_cli
+
+  tasks:
+    - name: Global configuration wireguard
+      vyos_config:
+        lines:
+          - set interfaces wireguard wg1 private-key "{{ lookup('file', inventory_hostname ~ '.2.key') }}"
+          - set interfaces wireguard wg1 description 'SDWAN-BCK'
+          - set interfaces wireguard wg1 port 51821
+        save: true
+
+- name: Wireguard HQ
+  hosts: hq
+  gather_facts: 'no'
+  connection: network_cli
+
+  tasks:
+    - name: Global configuration wireguard
+      vyos_config:
+        lines:
+          - set interfaces wireguard wg1 address 10.10.20.1/24
+
+          - set interfaces wireguard wg1 peer sede1 allowed-ips 10.10.20.2/32
+          - set interfaces wireguard wg1 peer sede1 allowed-ips {{ sede1_net }}
+          - set interfaces wireguard wg1 peer sede1 public-key "{{ lookup('file', 'sede1.2.pub' ) }}"
+
+          - set interfaces wireguard wg1 peer sede2 allowed-ips 10.10.20.3/32
+          - set interfaces wireguard wg1 peer sede2 allowed-ips {{ sede2_net }}
+          - set interfaces wireguard wg1 peer sede2 public-key "{{ lookup('file', 'sede2.2.pub' ) }}"
+
+          - set interfaces wireguard wg1 peer sede3 allowed-ips 10.10.20.4/32
+          - set interfaces wireguard wg1 peer sede3 allowed-ips {{ sede3_net }}
+          - set interfaces wireguard wg1 peer sede3 public-key "{{ lookup('file', 'sede3.2.pub' ) }}"
+
+          - set interfaces wireguard wg1 peer sede4 allowed-ips 10.10.20.5/32
+          - set interfaces wireguard wg1 peer sede4 allowed-ips {{ sede4_net }}
+          - set interfaces wireguard wg1 peer sede4 public-key "{{ lookup('file', 'sede4.2.pub' ) }}"
+        save: true
+
+- name: Wireguard headquarters1
+  hosts: sede1, sede2, sede3, sede4
+  gather_facts: 'no'
+  connection: network_cli
+
+  tasks:
+    - name: Global configuration wireguard
+      vyos_config:
+        lines:
+          - set interfaces wireguard wg1 address {{ wg_ip_bck }}
+          - set interfaces wireguard wg1 peer hq public-key '{{ lookup('file', 'hq.2.pub') }}'
+          - set interfaces wireguard wg1 peer hq address 192.168.1.231
+          - set interfaces wireguard wg1 peer hq port 51821
+          - set interfaces wireguard wg1 peer hq persistent-keepalive 25
+          - set interfaces wireguard wg1 peer hq allowed-ips 0.0.0.0/0
+        save: true
+
+- name: BGP
+  hosts: headquarters
+  gather_facts: no
+  connection: network_cli
+
+  tasks:
+    - name: BGP Configuration in all locations
+      vyos_config:
+        lines:
+          - set protocols bgp system-as '{{ asn }}'
+          - set protocols bgp address-family ipv4-unicast network '{{ lan_network }}'
+        save: yes
+
+- name: BGP headquarters
+  hosts: sede1, sede2, sede3, sede4
+  gather_facts: no
+  connection: network_cli
+
+  tasks:
+    - name: BGP Configuration in all locations
+      vyos_config:
+        lines:
+          - set protocols bgp neighbor {{ hq_ip_vpn }} remote-as {{ hq_as }}
+          - set protocols bgp neighbor {{ hq_ipbck_vpn }} remote-as {{ hq_as }}
+          - set protocols bgp neighbor {{ hq_ip_vpn }} address-family ipv4-unicast
+          - set protocols bgp neighbor {{ hq_ipbck_vpn }} address-family ipv4-unicast
+
+        save: yes
+
+- name: BGP HQ Configuration
+  hosts: hq
+  gather_facts: no
+  connection: network_cli
+
+  tasks:
+    - name: Configure Route Reflector Clients
+      vyos_config:
+        lines:
+          - set protocols bgp neighbor {{ sede1_ip_vpn }} remote-as {{ sede1_as }}
+          - set protocols bgp neighbor {{ sede1_ip_vpn }} address-family ipv4-unicast
+          - set protocols bgp neighbor {{ sede1_ipbck_vpn }} remote-as {{ sede1_as }}
+          - set protocols bgp neighbor {{ sede1_ipbck_vpn }} address-family ipv4-unicast
+
+          - set protocols bgp neighbor {{ sede2_ip_vpn }} remote-as {{ sede2_as }}
+          - set protocols bgp neighbor {{ sede2_ip_vpn }} address-family ipv4-unicast
+          - set protocols bgp neighbor {{ sede2_ipbck_vpn }} remote-as {{ sede2_as }}
+          - set protocols bgp neighbor {{ sede2_ipbck_vpn }} address-family ipv4-unicast
+
+          - set protocols bgp neighbor {{ sede3_ip_vpn }} remote-as {{ sede3_as }}
+          - set protocols bgp neighbor {{ sede3_ip_vpn }} address-family ipv4-unicast
+          - set protocols bgp neighbor {{ sede3_ipbck_vpn }} remote-as {{ sede3_as }}
+          - set protocols bgp neighbor {{ sede3_ipbck_vpn }} address-family ipv4-unicast
+
+          - set protocols bgp neighbor {{ sede4_ip_vpn }} remote-as {{ sede4_as }}
+          - set protocols bgp neighbor {{ sede4_ip_vpn }} address-family ipv4-unicast
+          - set protocols bgp neighbor {{ sede4_ipbck_vpn }} remote-as {{ sede4_as }}
+          - set protocols bgp neighbor {{ sede4_ipbck_vpn }} address-family ipv4-unicast
+        save: yes

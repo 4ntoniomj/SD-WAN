@@ -1,0 +1,59 @@
+---
+- name: BGP
+  hosts: headquarters
+  gather_facts: no
+  connection: network_cli
+
+  tasks:
+    - name: BGP Configuration in all locations
+      vyos_config:
+        lines:
+          - set protocols bgp system-as '{{ asn }}'
+          - set protocols bgp address-family ipv4-unicast network '{{ lan_network }}'
+        save: yes
+
+- name: BGP headquarters
+  hosts: sede1, sede2, sede3, sede4
+  gather_facts: no
+  connection: network_cli
+
+  tasks:
+    - name: BGP Configuration in all locations
+      vyos_config:
+        lines:
+          - set protocols bgp neighbor {{ hq_ip_vpn }} remote-as {{ hq_as }}
+          - set protocols bgp neighbor {{ hq_ipbck_vpn }} remote-as {{ hq_as }}
+          - set protocols bgp neighbor {{ hq_ip_vpn }} address-family ipv4-unicast
+          - set protocols bgp neighbor {{ hq_ipbck_vpn }} address-family ipv4-unicast
+
+        save: yes
+
+- name: BGP HQ Configuration
+  hosts: hq
+  gather_facts: no
+  connection: network_cli
+
+  tasks:
+    - name: Configure Route Reflector Clients
+      vyos_config:
+        lines:
+          - set protocols bgp neighbor {{ sede1_ip_vpn }} remote-as {{ sede1_as }}
+          - set protocols bgp neighbor {{ sede1_ip_vpn }} address-family ipv4-unicast
+          - set protocols bgp neighbor {{ sede1_ipbck_vpn }} remote-as {{ sede1_as }}
+          - set protocols bgp neighbor {{ sede1_ipbck_vpn }} address-family ipv4-unicast
+
+          - set protocols bgp neighbor {{ sede2_ip_vpn }} remote-as {{ sede2_as }}
+          - set protocols bgp neighbor {{ sede2_ip_vpn }} address-family ipv4-unicast
+          - set protocols bgp neighbor {{ sede2_ipbck_vpn }} remote-as {{ sede2_as }}
+          - set protocols bgp neighbor {{ sede2_ipbck_vpn }} address-family ipv4-unicast
+
+          - set protocols bgp neighbor {{ sede3_ip_vpn }} remote-as {{ sede3_as }}
+          - set protocols bgp neighbor {{ sede3_ip_vpn }} address-family ipv4-unicast
+          - set protocols bgp neighbor {{ sede3_ipbck_vpn }} remote-as {{ sede3_as }}
+          - set protocols bgp neighbor {{ sede3_ipbck_vpn }} address-family ipv4-unicast
+
+          - set protocols bgp neighbor {{ sede4_ip_vpn }} remote-as {{ sede4_as }}
+          - set protocols bgp neighbor {{ sede4_ip_vpn }} address-family ipv4-unicast
+          - set protocols bgp neighbor {{ sede4_ipbck_vpn }} remote-as {{ sede4_as }}
+          - set protocols bgp neighbor {{ sede4_ipbck_vpn }} address-family ipv4-unicast
+        save: yes

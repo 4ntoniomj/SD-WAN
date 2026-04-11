@@ -23,14 +23,22 @@
       vyos_config:
         lines:
           - set interfaces wireguard wg0 address 10.10.10.1/24
+
           - set interfaces wireguard wg0 peer sede1 allowed-ips 10.10.10.2/32
+          - set interfaces wireguard wg0 peer sede1 allowed-ips {{ sede1_net }}
           - set interfaces wireguard wg0 peer sede1 public-key "{{ lookup('file', 'sede1.pub' ) }}"
+
           - set interfaces wireguard wg0 peer sede2 allowed-ips 10.10.10.3/32
           - set interfaces wireguard wg0 peer sede2 public-key "{{ lookup('file', 'sede2.pub' ) }}"
+          - set interfaces wireguard wg0 peer sede2 allowed-ips {{ sede2_net }}
+
           - set interfaces wireguard wg0 peer sede3 allowed-ips 10.10.10.4/32
           - set interfaces wireguard wg0 peer sede3 public-key "{{ lookup('file', 'sede3.pub' ) }}"
+          - set interfaces wireguard wg0 peer sede3 allowed-ips {{ sede3_net }}
+
           - set interfaces wireguard wg0 peer sede4 allowed-ips 10.10.10.5/32
           - set interfaces wireguard wg0 peer sede4 public-key "{{ lookup('file', 'sede4.pub' ) }}"
+          - set interfaces wireguard wg0 peer sede4 allowed-ips {{ sede4_net }}
         save: true
 
 - name: Wireguard headquarters1
