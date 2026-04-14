@@ -1,0 +1,12 @@
+---
+- name: Delete Configuration Firewall
+  hosts: headquarters
+  gather_facts: 'no'
+  connection: network_cli
+
+  tasks:
+    - name: Groups
+      vyos_config:
+        lines:
+          - delete firewall
+        save: yes

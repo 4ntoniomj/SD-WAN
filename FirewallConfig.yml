@@ -1,0 +1,73 @@
+---
+- name: Configuration Firewall
+  hosts: headquarters
+  gather_facts: 'no'
+  connection: network_cli
+
+  tasks:
+    - name: Groups
+      vyos_config:
+        lines:
+          - set firewall group network-group LAN_VPN network "{{ lan_network  }}"
+          - set firewall group network-group LAN_VPN network "{{ vpn_net  }}"
+          - set firewall group network-group LAN_VPN network "{{ vpn_net2  }}"
+
+          - set firewall group network-group LAN network "{{ lan_network  }}"
+        save: yes
+
+    - name: Forward
+      vyos_config:
+        lines:
+          - set firewall ipv4 forward filter default-action drop
+
+          - set firewall ipv4 forward filter rule 1 action accept
+          - set firewall ipv4 forward filter rule 1 state related
+          - set firewall ipv4 forward filter rule 1 state established
+
+          - set firewall ipv4 forward filter rule 10 action accept
+          - set firewall ipv4 forward filter rule 10 source group network-group LAN
+        save: yes
+
+    - name: Input
+      vyos_config:
+        lines:
+          - set firewall ipv4 input filter default-action drop
+
+          - set firewall ipv4 input filter rule 1 action accept
+          - set firewall ipv4 input filter rule 1 state established
+          - set firewall ipv4 input filter rule 1 state related
+
+          - set firewall ipv4 input filter rule 2 action accept
+          - set firewall ipv4 input filter rule 2 source group network-group LAN_VPN
+          - set firewall ipv4 input filter rule 2 state new
+
+          - set firewall ipv4 input filter rule 10 action accept
+          - set firewall ipv4 input filter rule 10 protocol tcp
+          - set firewall ipv4 input filter rule 10 destination port 22
+
+          - set firewall ipv4 input filter rule 20 action accept
+          - set firewall ipv4 input filter rule 20 protocol udp
+          - set firewall ipv4 input filter rule 20 destination port 51820,51821
+
+          - set firewall ipv4 input filter rule 30 action accept
+          - set firewall ipv4 input filter rule 30 protocol icmp
+
+        save: yes
+
+    - name: Output
+      vyos_config:
+        lines:
+          - set firewall ipv4 output filter default-action accept
+        save: yes
+
+    - name: NAT
+      vyos_config:
+        lines:
+          - set nat source rule 1 outbound-interface name 'eth0'
+          - set nat source rule 1 source group network-group LAN
+          - set nat source rule 1 translation address masquerade
+
+          - set nat source rule 2 outbound-interface name 'eth1'
+          - set nat source rule 2 source group network-group LAN
+          - set nat source rule 2 translation address masquerade
+        save: yes
